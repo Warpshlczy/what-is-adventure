@@ -1,76 +1,57 @@
-import { GameObjects, Scene } from 'phaser';
+import { Scene, GameObjects } from "phaser";
+import { Button } from "../game-objects/global/Button";
+import { GameTitle } from "../game-objects/main-menu/Title";
+import { bindGameObject } from "../../utils/index";
+import { EventBus } from "../EventBus";
 
-import { EventBus } from '../EventBus';
-
-export class MainMenu extends Scene
-{
+export class MainMenu extends Scene {
     background: GameObjects.Image;
-    logo: GameObjects.Image;
-    title: GameObjects.Text;
-    logoTween: Phaser.Tweens.Tween | null;
+    title: GameTitle;
+    btns: {
+        startBtn: Button;
+        settingBtn: Button;
+    };
+    //渲染队列
 
-    constructor ()
-    {
-        super('MainMenu');
+    constructor() {
+        super("MainMenu");
     }
-
-    create ()
-    {
-        this.background = this.add.image(512, 384, 'background');
-
-        this.logo = this.add.image(512, 300, 'logo').setDepth(100);
-
-        this.title = this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5).setDepth(100);
-
-        EventBus.emit('current-scene-ready', this);
-    }
-    
-    changeScene ()
-    {
-        if (this.logoTween)
-        {
-            this.logoTween.stop();
-            this.logoTween = null;
-        }
-
-        this.scene.start('Game');
-    }
-
-    moveLogo (vueCallback: ({ x, y }: { x: number, y: number }) => void)
-    {
-        if (this.logoTween)
-        {
-            if (this.logoTween.isPlaying())
-            {
-                this.logoTween.pause();
-            }
-            else
-            {
-                this.logoTween.play();
-            }
-        } 
-        else
-        {
-            this.logoTween = this.tweens.add({
-                targets: this.logo,
-                x: { value: 750, duration: 3000, ease: 'Back.easeInOut' },
-                y: { value: 80, duration: 1500, ease: 'Sine.easeOut' },
-                yoyo: true,
-                repeat: -1,
-                onUpdate: () => {
-                    if (vueCallback)
-                    {
-                        vueCallback({
-                            x: Math.floor(this.logo.x),
-                            y: Math.floor(this.logo.y)
-                        });
-                    }
+    init() {
+        //初始化并绑定游戏对象,并添加到渲染队列中
+        this.background = bindGameObject(
+            new GameObjects.Image(this, 300, 384, "background")
+        );
+        this.title = bindGameObject(
+            new GameTitle(this, 548, 120, "异世界大冒险", {
+                fontFamily: "pixel",
+                fontSize: 64,
+                align: "center",
+            })
+        );
+        this.btns = bindGameObject({
+            startBtn: new Button(
+                this,
+                748,
+                420,
+                "width:100px;height:50px;",
+                "开始游戏",
+                "start-game",
+                () => {
+                    this.scene.start("Prelude");
                 }
-            });
-        }
+            ),
+            settingBtn: new Button(
+                this,
+                748,
+                500,
+                "width:100px;height:50px",
+                "设置"
+            ),
+        });
     }
+    create() {
+        //渲染所有指定渲染的游戏对象
+        EventBus.emit("current-scene-ready", this);
+    }
+    update() {}
 }
